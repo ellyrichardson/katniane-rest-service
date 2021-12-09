@@ -50,18 +50,18 @@ async fn main() {
     let get_balances = warp::path!("get-balances")
     .map(|| get_balances());
 
-    let get_log_storage = warp::path!("get-log-storage")
-    .map(|| get_log_storage());
+    let get_logs_of_filename = warp::path!("get-logs-of-file" / String)
+    .map(|log_filename| get_logs_of_file(log_filename));
 
-    let add_log = warp::path!("add-log" / String)
-        .map(|log_content| 
-          add_log(log_content)
+    let add_log = warp::path!("add-log" / String / String)
+        .map(|log_filename, log_content| 
+          add_log(log_filename, log_content)
         );
 
     let routes = warp::get().and(
       ping_chain
           .or(get_balances)
-          .or(get_log_storage)
+          .or(get_logs_of_filename)
           .or(add_log),
   );
 
@@ -107,7 +107,7 @@ fn get_balances() -> std::string::String {
   format!("[+] TotalIssuance is {}", result)
 }
 
-fn get_log_storage() -> std::string::String {
+fn get_logs_of_file(log_filename: String) -> std::string::String {
   // instantiate an Api that connects to the given address
   let url = "ws://127.0.0.1:9944";
   
@@ -116,7 +116,7 @@ fn get_log_storage() -> std::string::String {
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
 
   let result: AuditLog = api
-        .get_storage_double_map("Auditor", "AuditLogStorage", "test_filename2".to_string().into_bytes(), "test_timestamp3".to_string().into_bytes(), None)
+        .get_storage_double_map("Auditor", "AuditLogStorage", log_filename.to_string().into_bytes(), "test_timestamp3".to_string().into_bytes(), None)
         .unwrap()
         .or_else(|| Some(AuditLog::default()))
         .unwrap();
@@ -124,7 +124,7 @@ fn get_log_storage() -> std::string::String {
   format!("[+] log items are {:?}", result)
 }
 
-fn add_log(log_content: String) -> std::string::String {
+fn add_log(log_filename: String, log_content: String) -> std::string::String {
 
   let url = "ws://127.0.0.1:9944";
   
@@ -138,7 +138,7 @@ fn add_log(log_content: String) -> std::string::String {
     api.clone(),
     "Auditor",
     "save_audit_log",
-    "test_filename2".to_string().into_bytes(),
+    log_filename.to_string().into_bytes(),
     log_content.to_string().into_bytes(),
     "test_timestamp3".to_string().into_bytes()
   );

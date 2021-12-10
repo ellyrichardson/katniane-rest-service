@@ -14,7 +14,7 @@ use codec::{Decode, Encode};
 use sp_core::crypto::Pair;
 use sp_keyring::AccountKeyring;
 
-use warp::Filter;
+use warp::{http, Filter};
 
 // Dependencies for hash string converter
 use sp_core::sr25519::Public;
@@ -36,38 +36,46 @@ pub struct AuditLogSummary {
     contents: Vec<AuditLog>,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+struct IncomingAuditLog {
+    filename: String,
+    content: String,
+}
+
 #[tokio::main]
 async fn main() {
     // GET /hello/warp => 200 OK with body "Hello, warp!"
-    let ping_chain = warp::path!("ping-chain")
-        //.map(|name| format!("Hello, {}!", name));
+    let ping_chain = warp::path!("v1" / "ping-chain")
         .map(|| ping_chain());
 
-    let get_balances = warp::path!("get-balances")
-    .map(|| get_balances());
 
-    let get_logs_of_file_from_timestamp = warp::path!("get-logs-of-file" / String / String)
-    .map(|log_filename, log_timestamp| get_file_logs_from_timestamp(log_filename, log_timestamp));
+    let get_logs_with_filename_and_timestamp = warp::path!("v1" / "logs" / String / String)
+      .map(|log_filename, log_timestamp| 
+        get_file_logs_from_timestamp(log_filename, log_timestamp)
+      );
 
-    /*
-    let get_file_logs_from_timestamp = warp::path!("get-logs" / String / String)
-    .map(|log_filename| get_file_logs_from_timestamp(log_filename));
-    */
-    let add_log = warp::path!("add-log" / String / String)
-        .map(|log_filename, log_content| 
-          add_log(log_filename, log_content)
-        );
+    let save_log = warp::post()
+      .and(warp::path("v1"))
+      .and(warp::path("logs"))
+      .and(warp::path::end())
+      .and(json_body())
+      .and_then(save_log);
 
-    let routes = warp::get().and(
-      ping_chain
-          .or(get_balances)
-          .or(get_logs_of_file_from_timestamp)
-          .or(add_log),
-  );
+  let routes = ping_chain
+    .or(get_logs_with_filename_and_timestamp)
+    .or(save_log);
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))
         .await;
+}
+
+// TODO: Place in its own file
+fn json_body() -> impl Filter<Extract = (IncomingAuditLog,), Error = warp::Rejection> + Clone {
+  // When accepting a body, we want a JSON body
+  // (and to reject huge payloads)...
+  println!("json_body called");
+  warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
 fn ping_chain() -> std::string::String {
@@ -89,39 +97,6 @@ fn ping_chain() -> std::string::String {
 
   Metadata::pretty_format(&api.get_metadata().unwrap())
           .unwrap_or_else(|| "pretty format failed".to_string())
-}
-
-fn get_balances() -> std::string::String {
-  // instantiate an Api that connects to the given address
-  let url = "ws://127.0.0.1:9944";
-  
-  
-  let client = WsRpcClient::new(url);
-  let api = Api::<sr25519::Pair, _>::new(client).unwrap();
-
-  let result: u128 = api
-    .get_storage_value("Balances", "TotalIssuance", None)
-    .unwrap()
-    .unwrap();
-
-  format!("[+] TotalIssuance is {}", result)
-}
-
-fn get_logs_of_file(log_filename: String) -> std::string::String {
-  // instantiate an Api that connects to the given address
-  let url = "ws://127.0.0.1:9944";
-  
-  
-  let client = WsRpcClient::new(url);
-  let api = Api::<sr25519::Pair, _>::new(client).unwrap();
-
-  let result: AuditLog = api
-        .get_storage_double_map("Auditor", "AuditLogStorage", log_filename.to_string().into_bytes(), "test_timestamp3".to_string().into_bytes(), None)
-        .unwrap()
-        .or_else(|| Some(AuditLog::default()))
-        .unwrap();
-        
-  format!("[+] log items are {:?}", result)
 }
 
 // TODO: The output in the Response is quite dirty, need to clean it up
@@ -146,12 +121,16 @@ fn collect_file_logs_from_timestamp_range(log_filename: &String, log_timestamp_b
   let mut time_seconds = 0;
   let mut audit_logs: Vec<AuditLog> = Vec::new();
 
-  // TODO: Should only push Audit Logs that have contents
   while time_seconds < timestamp_diff {
-    time_seconds = time_seconds + 1;
     let adjusted_log_timestamp = str_timestmp_begin + Duration::seconds(time_seconds);
     println!("date_time of retrieval {}", adjusted_log_timestamp);
-    audit_logs.push(retrieve_log_from(&log_filename, &adjusted_log_timestamp.to_rfc3339().to_string()));
+    let result = retrieve_log_from(&log_filename, &adjusted_log_timestamp.to_rfc3339().to_string());
+
+    if !&result.content.trim().is_empty() {
+      println!("adding audit_log result {:?}", result);
+      audit_logs.push(result);
+    }
+    time_seconds = time_seconds + 1;
   }
 
   audit_logs
@@ -169,7 +148,7 @@ fn retrieve_log_from(log_filename: &String, log_timestamp: &String) -> AuditLog 
         .unwrap()
 }
 
-fn add_log(log_filename: String, log_content: String) -> std::string::String {
+async fn save_log(incoming_audit_log: IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
 
   let url = "ws://127.0.0.1:9944";
   
@@ -186,8 +165,8 @@ fn add_log(log_filename: String, log_content: String) -> std::string::String {
     api.clone(),
     "Auditor",
     "save_audit_log",
-    log_filename.to_string().into_bytes(),
-    log_content.to_string().into_bytes(),
+    incoming_audit_log.filename.to_string().into_bytes(),
+    incoming_audit_log.content.to_string().into_bytes(),
     now.to_rfc3339().to_string().into_bytes()
   );
 
@@ -197,5 +176,10 @@ fn add_log(log_filename: String, log_content: String) -> std::string::String {
   // send and watch extrinsic until finalized
   let blockh = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
 
-  format!("[+] Transaction got included in block {:?}", blockh)
+  println!("[+] Transaction got included in block {:?}", blockh);
+
+  Ok(warp::reply::with_status(
+    "Added logs to blockchain",
+    http::StatusCode::CREATED,
+  ))
 }

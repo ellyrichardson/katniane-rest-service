@@ -44,16 +44,26 @@ struct IncomingAuditLog {
 
 #[tokio::main]
 async fn main() {
-    // GET /hello/warp => 200 OK with body "Hello, warp!"
     let ping_chain = warp::path!("v1" / "ping-chain")
         .map(|| ping_chain());
 
-
+    /* 
+      USAGE: <address>/v1/logs/<filename>/<timestamp_begin>
+      Timestamp (UTC) format example: 2021-12-10T02:53:00+00:00
+    */
     let get_logs_with_filename_and_timestamp = warp::path!("v1" / "logs" / String / String)
-      .map(|log_filename, log_timestamp| 
-        get_file_logs_from_timestamp(log_filename, log_timestamp)
-      );
+      .and_then(get_file_logs_from_timestamp);
 
+    /* 
+      USAGE: <address>/v1/logs/<filename>/<timestamp_begin>/<timestamp_end>
+      Timestamp (UTC) format example: 2021-12-10T02:53:00+00:00
+    */
+    let get_logs_with_filename_and_timestamp_range = warp::path!("v1" / "logs" / String / String / String)
+      .and_then(get_file_logs_from_timestamp_range);
+      
+    /*
+      CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/logs -H 'Content-Type: application/json' -d '{"filename":"my_login","content":"my_password2"}'
+     */
     let save_log = warp::post()
       .and(warp::path("v1"))
       .and(warp::path("logs"))
@@ -63,6 +73,7 @@ async fn main() {
 
   let routes = ping_chain
     .or(get_logs_with_filename_and_timestamp)
+    .or(get_logs_with_filename_and_timestamp_range)
     .or(save_log);
 
     warp::serve(routes)
@@ -99,14 +110,28 @@ fn ping_chain() -> std::string::String {
           .unwrap_or_else(|| "pretty format failed".to_string())
 }
 
-// TODO: The output in the Response is quite dirty, need to clean it up
-fn get_file_logs_from_timestamp(log_filename: String, log_timestamp: String) -> std::string::String {
+async fn get_file_logs_from_timestamp(log_filename: String, log_timestamp: String) -> Result<impl warp::Reply, warp::Rejection> {
   let result: Vec<AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_timestamp, &Utc::now().to_rfc3339());
   let result_summary = AuditLogSummary {
     filename: log_filename,
     contents: result
   };
-  format!("{:?}", serde_json::to_string(&result_summary).unwrap())
+  println!("{:?}", serde_json::to_string(&result_summary).unwrap());
+  Ok(warp::reply::json(
+    &result_summary
+  ))
+}
+
+async fn get_file_logs_from_timestamp_range(log_filename: String, log_timestamp_begin: String, log_timestamp_end: String) -> Result<impl warp::Reply, warp::Rejection> {
+  let result: Vec<AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_timestamp_begin, &log_timestamp_end);
+  let result_summary = AuditLogSummary {
+    filename: log_filename,
+    contents: result
+  };
+  println!("{:?}", serde_json::to_string(&result_summary).unwrap());
+  Ok(warp::reply::json(
+    &result_summary
+  ))
 }
 
 // NOTE: This currently has O(n) so it needs refactoring for performance at some point

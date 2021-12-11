@@ -14,7 +14,6 @@ mod models;
 // instantiate an Api that connects to the given address
 static URL: &str = "ws://127.0.0.1:9944";
 
-// TODO: Place in its own file
 pub fn json_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...

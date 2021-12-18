@@ -61,62 +61,6 @@ pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> 
   ))
 }
 
-/*
-// TODO: Check if can be removed
-pub async fn get_file_logs_from_date_range(log_filename: String, log_date_begin: String, log_date_end: String) -> Result<impl warp::Reply, warp::Rejection> {
-  let result: Vec<models::AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_date_begin, &log_date_end);
-  let result_summary = models::AuditLogSummary {
-    filename: log_filename,
-    date: log_date_begin,
-    contents: result
-  };
-  println!("{:?}", serde_json::to_string(&result_summary).unwrap());
-  Ok(warp::reply::json(
-    &result_summary
-  ))
-}*/
-
-// NOTE: This currently has O(n) so it needs refactoring for performance at some point
-// NOTE: This function can be in a utility class
-// TODO: Must deal with nanoseconds items
-// TODO: Check if can be removed
-/*
-fn collect_file_logs_from_timestamp_range(log_filename: &String, log_date_begin: &String, log_date_end: &String) -> Vec<models::AuditLog> {
-
-  let str_date_begin = DateTime::parse_from_rfc3339(&log_date_begin[..]).unwrap();
-  let str_date_end = DateTime::parse_from_rfc3339(&log_date_end[..]).unwrap();
-  let date_diff: i64 = str_date_end.signed_duration_since(str_date_begin).num_seconds();
-
-  let mut time_seconds = 0;
-  let mut audit_logs: Vec<models::AuditLog> = Vec::new();
-
-while time_seconds < date_diff {
-    let adjusted_log_date = str_date_begin + Duration::seconds(time_seconds);
-    println!("date_time of retrieval {}", adjusted_log_date);
-    let result = retrieve_log_from(&log_filename, &adjusted_log_date.to_rfc3339().to_string());
-
-    if !&result.content.trim().is_empty() {
-      println!("adding audit_log result {:?}", result);
-      audit_logs.push(result);
-    }
-    time_seconds = time_seconds + 1;
-  }
-
-  audit_logs
-}*/
-
-// NOTE: This function can be in a utility class
-// TODO: Check if can be removed
-/*
-fn retrieve_log_from(log_filename: &String, log_date: &String) -> Vec<models::AuditLog> {
-  let client = WsRpcClient::new(URL);
-  let api = Api::<sr25519::Pair, _>::new(client).unwrap();
-  api.get_storage_double_map("Auditor", "AuditLogStorage", log_filename.to_string().into_bytes(), log_date.to_string().into_bytes(), None)
-        .unwrap()
-        .or_else(|| Some(Vec::default()))
-        .unwrap()
-}*/
-
 pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
   let client = WsRpcClient::new(URL);
   let from = AccountKeyring::Alice.pair();

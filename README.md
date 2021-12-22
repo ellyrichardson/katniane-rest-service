@@ -1,2 +1,2 @@
 # katniane-rest-service
-Rust-based client for the Katniane blockchain
+Rust-based REST service for the Katniane blockchain

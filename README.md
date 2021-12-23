@@ -34,7 +34,7 @@ To save a log via the Katniane REST service, the HTTP `POST` method
 can be utilized for the `/v1/logs` endpoint.
 
 `curl` example:
-```
+```sh
 curl -X POST 127.0.0.1:3030/v1/logs \
 -H 'Content-Type: application/json' \
 -d '{

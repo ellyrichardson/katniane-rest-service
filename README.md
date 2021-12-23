@@ -25,11 +25,11 @@ The `reporter` field is the public key of the user/entity who sent the logs. The
 extract this data so theres no need for the user/entity to provide it in the request. This is to identify
 entities that has added entries to the log file.
 
-### Usage
+# Usage
 In order for users/entities to be able to save logs to Katniane using this REST service, HTTP methods
 are available for usage.
 
-# Saving Logs
+### Saving Logs
 To save a log via the Katniane REST service, the HTTP `POST` method 
 can be utilized for the `/v1/logs` endpoint.
 
@@ -46,7 +46,7 @@ curl -X POST 127.0.0.1:3030/v1/logs \
 The `filename` field of the JSON payload is the filename where the logs are supposed to 
 be mapped and associated with. 
 
-# Retrieving Logs
+### Retrieving Logs
 To retrieve logs via the Katniane REST service, the HTTP `GET` method can be utilized 
 for the `/v1/logs/<filename>/<timestamp>` endpoint. 
 

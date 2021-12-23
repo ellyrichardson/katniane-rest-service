@@ -73,7 +73,7 @@ First, complete the [basic Rust setup instructions](./doc/rust-setup.md).
 
 ### Katniane Node Setup
 
-Setup the Katniane Node by following the guide in this repo: [Katniane Node](https://github.com/ellyrichardson/katniane-node)
+Setup and run a Katniane Node by following the guide in this repo: [Katniane Node](https://github.com/ellyrichardson/katniane-node)
 
 ### Run
 

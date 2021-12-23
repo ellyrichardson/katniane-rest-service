@@ -19,7 +19,7 @@ async fn main() {
       .and_then(endpoint_handlers::get_file_logs_from_date);
       
     /*
-      CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/logs -H 'Content-Type: application/json' -d '{"filename":"my_login","content":"my_password2"}'
+      CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/logs -H 'Content-Type: application/json' -d '{"filename":"test_log_file1","title":"test_four_title","content":"content4"}''
      */
     let save_log = warp::post()
       .and(warp::path("v1"))

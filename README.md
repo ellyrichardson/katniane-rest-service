@@ -71,7 +71,7 @@ Follow the steps below to get started with the Katniane REST Service.
 
 First, complete the [basic Rust setup instructions](./doc/rust-setup.md).
 
-### Katniane Node Setup
+### Katniane Node
 
 Setup and run a Katniane Node by following the guide in this repo: [Katniane Node](https://github.com/ellyrichardson/katniane-node)
 

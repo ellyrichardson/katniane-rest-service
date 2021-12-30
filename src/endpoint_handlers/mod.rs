@@ -21,6 +21,13 @@ pub fn json_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error =
     println!("json_body called");
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
+
+pub fn validator_json_body() -> impl Filter<Extract = (models::ValidatorAccount,), Error = warp::Rejection> + Clone {
+  // When accepting a body, we want a JSON body
+  // (and to reject huge payloads)...
+  println!("json_body called");
+  warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
   
 pub fn ping_chain() -> std::string::String {
   let client = WsRpcClient::new(URL);
@@ -85,6 +92,34 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
     incoming_audit_log.title.to_string().into_bytes(),
     incoming_audit_log.content.to_string().into_bytes(),
     now.to_rfc3339().to_string().into_bytes()
+  );
+
+  
+  println!("[+] Composed Extrinsic:\n {:?}\n", xt);
+  
+  // send and watch extrinsic until finalized
+  let blockh = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+
+  println!("[+] Transaction got included in block {:?}", blockh);
+
+  Ok(warp::reply::with_status(
+    "Added logs to blockchain",
+    http::StatusCode::CREATED,
+  ))
+}
+
+pub async fn add_validator(validator_account_id: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
+  let client = WsRpcClient::new(URL);
+  let from = AccountKeyring::Alice.pair();
+  let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
+
+  // NOTE: save_audit_log exists in Auditor pallet thats why this works
+  #[allow(clippy::redundant_clone)]
+  let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+    api.clone(),
+    "ValidatorSet",
+    "add_validator",
+    validator_account_id
   );
 
   

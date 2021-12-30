@@ -12,6 +12,7 @@ reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.64"
+# might want to keep a 12/2021 tag for substrate-api-client
 substrate-api-client = { git = "https://github.com/scs/substrate-api-client.git" }
 codec = { package = "parity-scale-codec", features = ["derive"], version = "2.0.0" }
 sp-core = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate.git", branch = "master" }

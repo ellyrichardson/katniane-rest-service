@@ -25,7 +25,7 @@ async fn main() {
       .and(warp::path("v1"))
       .and(warp::path("logs"))
       .and(warp::path::end())
-      .and(endpoint_handlers::json_body())
+      .and(endpoint_handlers::log_body())
       .and_then(endpoint_handlers::save_log);
 
     /*
@@ -35,7 +35,7 @@ async fn main() {
       .and(warp::path("v1"))
       .and(warp::path("participants"))
       .and(warp::path::end())
-      .and(endpoint_handlers::validator_json_body())
+      .and(endpoint_handlers::validator_body())
       .and_then(endpoint_handlers::add_validator);
 
   let routes = ping_chain

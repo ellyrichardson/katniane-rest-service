@@ -26,3 +26,8 @@ pub struct IncomingAuditLog {
     pub title: String,
     pub content: String,
 }
+
+#[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
+pub struct ValidatorAccount {
+    pub validator_id: String,
+}

@@ -12,8 +12,8 @@ async fn main() {
         .map(|| endpoint_handlers::ping_chain());
 
     /* 
-      USAGE: <address>/v1/logs/<filename>/<timestamp_begin>
-      Timestamp (UTC) format example: 2021-12-10T02:53:00+00:00
+      USAGE: http://127.0.0.1:3030/v1/logs/test_file/2021-12-14
+      Timestamp (UTC) format example: 2021-12-14
     */
     let get_logs_with_filename_and_date = warp::path!("v1" / "logs" / String / String)
       .and_then(endpoint_handlers::get_file_logs_from_date);
@@ -29,7 +29,7 @@ async fn main() {
       .and_then(endpoint_handlers::save_log);
 
     /*
-      CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/participants -H 'Content-Type: application/json' -d '{"validator_id":"0x1a4cc824f6585859851f818e71ac63cf6fdc81018189809814677b2a4699cf45"}'
+      CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/participants -H 'Content-Type: application/json' -d '{"validator_id":"0x16b215a5fd8b8caa03e75313e78c8ee344ba6ee7c6c2d6ce0a0a2e4e3a0d2377f775fc2682db3bb79376a61e773a87cddd1e5e5935cdea8a9ab3a54be011a62b"}'
      */
     let add_validator = warp::post()
       .and(warp::path("v1"))

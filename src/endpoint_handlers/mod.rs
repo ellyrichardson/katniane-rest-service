@@ -12,7 +12,7 @@ mod models;
 
 // TODO: Move this to a yml config file
 // instantiate an Api that connects to the given address
-static URL: &str = "ws://127.0.0.1:9944";
+static URL: &str = "ws://127.0.0.1:9945";
 
 pub fn log_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
     // When accepting a body, we want a JSON body
@@ -75,7 +75,11 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
   let now: DateTime<Local> = Local::now();
   //println!("date_time of added_log {}", &now.to_rfc3339().to_string()[..]);
 
-  let datetime = now.clone().to_rfc3339().to_string();
+  let mut datetime = now.clone().to_rfc3339().to_string();
+
+  // Remove time items and leave only the date of format YYYY-MM-DD
+  datetime.split_off(10);
+
   println!("date_time of added_log {}", &datetime);
 
   // NOTE: save_audit_log exists in Auditor pallet thats why this works
@@ -117,9 +121,10 @@ pub async fn add_validator(validator_account: models::ValidatorAccount) -> Resul
     "Session",
     "set_keys",
     validator_account.clone().validator_id,
-    "0x".as_bytes().to_vec()
+    "0x".to_string().into_bytes()
   );
 
+  println!("[+] validator id: :\n {:?}\n", validator_account.clone().validator_id);
   println!("[+] Composed Extrinsic:\n {:?}\n", setkey_tx);
   
   // send and watch extrinsic until finalized

@@ -17,10 +17,6 @@ use std::env;
 
 mod models;
 
-// TODO: Move this to a yml config file
-// instantiate an Api that connects to the given address
-//static URL: &str = "ws://127.0.0.1:9945";
-
 // TODO: Move this in it's own file
 fn load_service_config() -> models::Config {
   // Working directory of the application
@@ -65,19 +61,7 @@ pub fn validator_body() -> impl Filter<Extract = (models::ValidatorAccount,), Er
   
 pub fn ping_chain() -> std::string::String {
 
-  // ----
-
   let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
-
-  // ---
-
-  // Compose the Chain url
-  /*
-  let mut chain_url = load_service_config().katniane_chain_address;
-  let chain_port = load_service_config().katniane_chain_port;
-  chain_url.push_str(&chain_port);
-
-  println!("chain url: {:?}", &chain_url);*/
 
   let client = WsRpcClient::new(&chain_ws_url);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
@@ -96,14 +80,6 @@ pub fn ping_chain() -> std::string::String {
 }
 
 pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> Result<impl warp::Reply, warp::Rejection> {
-  //let result: Vec<models::AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_date, &Utc::now().to_rfc3339());
-
-  /*
-  let mut chain_url = load_service_config().katniane_chain_address;
-  let chain_port = load_service_config().katniane_chain_port;
-  chain_url.push_str(&chain_port);
-
-  println!("chain url: {:?}", &chain_url);*/
 
   let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
 
@@ -129,24 +105,15 @@ pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> 
 }
 
 pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
-  
-  /*
-  let mut chain_url = load_service_config().katniane_chain_address;
-  let chain_port = load_service_config().katniane_chain_port;
-  chain_url.push_str(&chain_port);
-
-  println!("chain url: {:?}", &chain_url);*/
 
   let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
 
-  //let client = WsRpcClient::new(URL);
   let from = AccountKeyring::Alice.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   let now: DateTime<Local> = Local::now();
-  //println!("date_time of added_log {}", &now.to_rfc3339().to_string()[..]);
 
   let mut datetime = now.clone().to_rfc3339().to_string();
 

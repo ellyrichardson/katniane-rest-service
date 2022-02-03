@@ -12,7 +12,7 @@ async fn main() {
         .map(|| endpoint_handlers::ping_chain());
 
     /* 
-      USAGE: http://127.0.0.1:3030/v1/logs/test_file/2021-12-14
+      USAGE: http://127.0.0.1:3030/v1/logs/test_log_file1/2021-12-14
       Timestamp (UTC) format example: 2021-12-14
     */
     let get_logs_with_filename_and_date = warp::path!("v1" / "logs" / String / String)
@@ -31,6 +31,7 @@ async fn main() {
     /*
       CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/participants -H 'Content-Type: application/json' -d '{"validator_id":"0x16b215a5fd8b8caa03e75313e78c8ee344ba6ee7c6c2d6ce0a0a2e4e3a0d2377f775fc2682db3bb79376a61e773a87cddd1e5e5935cdea8a9ab3a54be011a62b"}'
      */
+    // NOTE: THIS add_validator function is not yet functional
     let add_validator = warp::post()
       .and(warp::path("v1"))
       .and(warp::path("participants"))

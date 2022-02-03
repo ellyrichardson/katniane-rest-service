@@ -19,8 +19,9 @@ mod models;
 
 // TODO: Move this to a yml config file
 // instantiate an Api that connects to the given address
-static URL: &str = "ws://127.0.0.1:9945";
+//static URL: &str = "ws://127.0.0.1:9945";
 
+// TODO: Move this in it's own file
 fn load_service_config() -> models::Config {
   // Working directory of the application
   let mut env_dir: String = env::current_dir().unwrap().into_os_string().into_string().unwrap();
@@ -46,6 +47,7 @@ fn load_service_config() -> models::Config {
   toml::from_str(&cfstr).unwrap()
 }
 
+// TODO: Move JSON bodies in it's own file
 pub fn log_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
@@ -53,6 +55,7 @@ pub fn log_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = 
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+// TODO: Move JSON bodies in it's own file
 pub fn validator_body() -> impl Filter<Extract = (models::ValidatorAccount,), Error = warp::Rejection> + Clone {
   // When accepting a body, we want a JSON body
   // (and to reject huge payloads)...
@@ -62,14 +65,21 @@ pub fn validator_body() -> impl Filter<Extract = (models::ValidatorAccount,), Er
   
 pub fn ping_chain() -> std::string::String {
 
+  // ----
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  // ---
+
   // Compose the Chain url
+  /*
   let mut chain_url = load_service_config().katniane_chain_address;
   let chain_port = load_service_config().katniane_chain_port;
   chain_url.push_str(&chain_port);
 
-  println!("chain url: {:?}", &chain_url);
+  println!("chain url: {:?}", &chain_url);*/
 
-  let client = WsRpcClient::new(&chain_url);
+  let client = WsRpcClient::new(&chain_ws_url);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
   let meta = Metadata::try_from(api.get_metadata().unwrap()).unwrap();
 
@@ -88,7 +98,18 @@ pub fn ping_chain() -> std::string::String {
 pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> Result<impl warp::Reply, warp::Rejection> {
   //let result: Vec<models::AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_date, &Utc::now().to_rfc3339());
 
-  let client = WsRpcClient::new(URL);
+  /*
+  let mut chain_url = load_service_config().katniane_chain_address;
+  let chain_port = load_service_config().katniane_chain_port;
+  chain_url.push_str(&chain_port);
+
+  println!("chain url: {:?}", &chain_url);*/
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
+
+  //let client = WsRpcClient::new(URL);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
   let result: Vec<models::AuditLog> = api.get_storage_double_map("Auditor", "AuditLogStorage", &log_filename.to_string().into_bytes(), &log_date.to_string().into_bytes(), None)
     .unwrap()
@@ -108,7 +129,19 @@ pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> 
 }
 
 pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
-  let client = WsRpcClient::new(URL);
+  
+  /*
+  let mut chain_url = load_service_config().katniane_chain_address;
+  let chain_port = load_service_config().katniane_chain_port;
+  chain_url.push_str(&chain_port);
+
+  println!("chain url: {:?}", &chain_url);*/
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
+
+  //let client = WsRpcClient::new(URL);
   let from = AccountKeyring::Alice.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
@@ -149,8 +182,11 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
   ))
 }
 
+// NOTE: This add_validator() is still not used anywhere
 pub async fn add_validator(validator_account: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
-  let client = WsRpcClient::new(URL);
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
   let from = AccountKeyring::Alice.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 

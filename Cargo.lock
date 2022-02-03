@@ -2364,6 +2364,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
+name = "rustc-serialize"
+version = "0.3.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dcf128d1287d2ea9d80910b5f1120d0b8eede3fbf1abe91c40d39ea7d51e6fda"
+
+[[package]]
 name = "rustc_version"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3756,12 +3762,14 @@ dependencies = [
  "hyper 0.11.27",
  "parity-scale-codec",
  "reqwest",
+ "rustc-serialize",
  "serde",
  "serde_json",
  "sp-core",
  "sp-keyring",
  "substrate-api-client",
  "tokio 1.14.0",
+ "toml",
  "warp",
 ]
 

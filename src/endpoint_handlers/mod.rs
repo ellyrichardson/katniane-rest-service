@@ -1,3 +1,5 @@
+extern crate toml;
+
 use sp_core::sr25519;
 use std::convert::TryFrom;
 use substrate_api_client::rpc::WsRpcClient;
@@ -6,24 +8,78 @@ use sp_core::crypto::Pair;
 use sp_keyring::AccountKeyring;
 use warp::{http, Filter};
 use chrono::{DateTime, Local};
-use chrono::prelude::*;
 use std::str;
+use std::fs::{File, OpenOptions};
+use std::io::Read;
+use toml::Value;
+
+use std::env;
 
 mod models;
 
 // TODO: Move this to a yml config file
 // instantiate an Api that connects to the given address
-static URL: &str = "ws://127.0.0.1:9944";
+//static URL: &str = "ws://127.0.0.1:9945";
 
-pub fn json_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
+// TODO: Move this in it's own file
+fn load_service_config() -> models::Config {
+  // Working directory of the application
+  let mut env_dir: String = env::current_dir().unwrap().into_os_string().into_string().unwrap();
+
+  let config_file: &str = "/Config.toml";
+  println!("Working directory is {:?}", &env_dir);
+  env_dir.push_str(config_file);
+
+  let mut cfl = match File::open(&env_dir) {
+    Ok(f) => f,
+    Err(e) => panic!("Error occurred opening config file: {} - Err: {}", &env_dir, e)
+  };
+
+  let mut cfstr = String::new();
+  match cfl.read_to_string(&mut cfstr) {
+    Ok(s) => s,
+    Err(e) => panic!("Error Reading file: {}", e)
+  };
+
+  println!("Config File: {}", &env_dir);
+  println!("Config contents: {}", &cfstr);
+
+  toml::from_str(&cfstr).unwrap()
+}
+
+// TODO: Move JSON bodies in it's own file
+pub fn log_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
-    println!("json_body called");
+    println!("json log_body called");
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+// TODO: Move JSON bodies in it's own file
+pub fn validator_body() -> impl Filter<Extract = (models::ValidatorAccount,), Error = warp::Rejection> + Clone {
+  // When accepting a body, we want a JSON body
+  // (and to reject huge payloads)...
+  println!("json validator_body called");
+  warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
   
 pub fn ping_chain() -> std::string::String {
-  let client = WsRpcClient::new(URL);
+
+  // ----
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  // ---
+
+  // Compose the Chain url
+  /*
+  let mut chain_url = load_service_config().katniane_chain_address;
+  let chain_port = load_service_config().katniane_chain_port;
+  chain_url.push_str(&chain_port);
+
+  println!("chain url: {:?}", &chain_url);*/
+
+  let client = WsRpcClient::new(&chain_ws_url);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
   let meta = Metadata::try_from(api.get_metadata().unwrap()).unwrap();
 
@@ -42,7 +98,18 @@ pub fn ping_chain() -> std::string::String {
 pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> Result<impl warp::Reply, warp::Rejection> {
   //let result: Vec<models::AuditLog> = collect_file_logs_from_timestamp_range(&log_filename, &log_date, &Utc::now().to_rfc3339());
 
-  let client = WsRpcClient::new(URL);
+  /*
+  let mut chain_url = load_service_config().katniane_chain_address;
+  let chain_port = load_service_config().katniane_chain_port;
+  chain_url.push_str(&chain_port);
+
+  println!("chain url: {:?}", &chain_url);*/
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
+
+  //let client = WsRpcClient::new(URL);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
   let result: Vec<models::AuditLog> = api.get_storage_double_map("Auditor", "AuditLogStorage", &log_filename.to_string().into_bytes(), &log_date.to_string().into_bytes(), None)
     .unwrap()
@@ -62,7 +129,19 @@ pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> 
 }
 
 pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
-  let client = WsRpcClient::new(URL);
+  
+  /*
+  let mut chain_url = load_service_config().katniane_chain_address;
+  let chain_port = load_service_config().katniane_chain_port;
+  chain_url.push_str(&chain_port);
+
+  println!("chain url: {:?}", &chain_url);*/
+
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
+
+  //let client = WsRpcClient::new(URL);
   let from = AccountKeyring::Alice.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
@@ -70,8 +149,10 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
   //println!("date_time of added_log {}", &now.to_rfc3339().to_string()[..]);
 
   let mut datetime = now.clone().to_rfc3339().to_string();
+
   // Remove time items and leave only the date of format YYYY-MM-DD
-  let datetime_trails = datetime.split_off(10);
+  datetime.split_off(10);
+
   println!("date_time of added_log {}", &datetime);
 
   // NOTE: save_audit_log exists in Auditor pallet thats why this works
@@ -87,6 +168,54 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
     now.to_rfc3339().to_string().into_bytes()
   );
 
+  
+  println!("[+] Composed Extrinsic:\n {:?}\n", xt);
+  
+  // send and watch extrinsic until finalized
+  let blockh = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+
+  println!("[+] Transaction got included in block {:?}", blockh);
+
+  Ok(warp::reply::with_status(
+    "Added logs to blockchain",
+    http::StatusCode::CREATED,
+  ))
+}
+
+// NOTE: This add_validator() is still not used anywhere
+pub async fn add_validator(validator_account: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
+  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+
+  let client = WsRpcClient::new(&chain_ws_url);
+  let from = AccountKeyring::Alice.pair();
+  let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
+
+  //let x: String = validator_account_id;
+
+  let setkey_tx: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+    api.clone(),
+    "Session",
+    "set_keys",
+    validator_account.clone().validator_id,
+    "0x".to_string().into_bytes()
+  );
+
+  println!("[+] validator id: :\n {:?}\n", validator_account.clone().validator_id);
+  println!("[+] Composed Extrinsic:\n {:?}\n", setkey_tx);
+  
+  // send and watch extrinsic until finalized
+  let blockh1 = api.clone().send_extrinsic(setkey_tx.hex_encode(), XtStatus::InBlock).unwrap();
+
+  println!("[+] Transaction got included in block {:?}", blockh1);
+
+  // NOTE: save_audit_log exists in Auditor pallet thats why this works
+  #[allow(clippy::redundant_clone)]
+  let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+    api.clone(),
+    "ValidatorSet",
+    "add_validator",
+    validator_account.validator_id
+  );
   
   println!("[+] Composed Extrinsic:\n {:?}\n", xt);
   

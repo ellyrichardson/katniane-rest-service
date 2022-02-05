@@ -39,10 +39,16 @@ async fn main() {
       .and(endpoint_handlers::validator_body())
       .and_then(endpoint_handlers::add_validator);
 
-  let routes = ping_chain
-    .or(get_logs_with_filename_and_date)
-    .or(save_log)
-    .or(add_validator);
+    let cors = warp::cors()
+      .allow_any_origin()
+      .allow_headers(vec!["User-Agent", "Sec-Fetch-Mode", "Referer", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "content-type"])
+      .allow_methods(vec!["POST", "GET"]);
+
+    let routes = ping_chain
+      .or(get_logs_with_filename_and_date)
+      .or(save_log)
+      .or(add_validator)
+      .with(cors);
 
     warp::serve(routes)
         .run(([127, 0, 0, 1], 3030))

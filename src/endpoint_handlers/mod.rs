@@ -85,7 +85,7 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
 
   let config = utilities::load_service_config();
   let chain_ws_url = format!("ws://{}:{}", &config.katniane_chain_address, &config.katniane_chain_port);
-  
+
   let client = WsRpcClient::new(&chain_ws_url);
 
   let from = AccountKeyring::Alice.pair();
@@ -108,8 +108,8 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
     "save_audit_log",
     incoming_audit_log.filename.to_string().into_bytes(),
     datetime.to_string().into_bytes(),
-    incoming_audit_log.title.to_string().into_bytes(),
-    incoming_audit_log.content.to_string().into_bytes(),
+    utilities::should_rsa_encrypt_data(incoming_audit_log.title.to_string().into_bytes()),
+    utilities::should_rsa_encrypt_data(incoming_audit_log.content.to_string().into_bytes()),
     now.to_rfc3339().to_string().into_bytes()
   );
 

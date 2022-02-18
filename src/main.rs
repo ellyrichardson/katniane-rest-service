@@ -1,6 +1,7 @@
 #![feature(decl_macro)]
 extern crate futures;
 extern crate hyper;
+extern crate openssl;
 
 use warp::Filter;
 

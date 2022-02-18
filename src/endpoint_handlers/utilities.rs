@@ -4,6 +4,8 @@ use std::io::Read;
 use toml::Value;
 use serde::Deserialize;
 use std::string::String;
+use openssl::rsa::{Rsa, Padding};
+use openssl::symm::Cipher;
 
 // REST Service Config
 #[derive(Deserialize)]
@@ -32,10 +34,19 @@ pub fn load_service_config() -> Config {
   }
 
 pub fn get_private_key() -> String {
-    let key_loc = read_file_content_from_dir(&load_service_config().private_key_location);
+    //let key_loc = read_file_content_from_dir(&load_service_config().private_key_location);
 
     // Read and return the key from the file provided in the key location
-    read_file_content_from_dir(&key_loc)
+    // read_file_content_from_dir(&key_loc)
+    read_file_content_from_dir(&load_service_config().private_key_location)
+}
+
+pub fn get_public_key() -> String {
+    //let key_loc = read_file_content_from_dir(&load_service_config().public_key_location);
+
+    // Read and return the key from the file provided in the key location
+    //read_file_content_from_dir(&key_loc)
+    read_file_content_from_dir(&load_service_config().public_key_location)
 }
 
 pub fn read_file_content_from_dir(file_dir: &String) -> String {
@@ -53,4 +64,20 @@ pub fn read_file_content_from_dir(file_dir: &String) -> String {
     };
 
     file_content
+}
+
+pub fn should_rsa_encrypt_data(data: Vec<u8>) -> Vec<u8> {
+    let public_key_pem = load_service_config().public_key_location;
+
+    if public_key_pem.is_empty() {
+        // return data
+        return data
+    } else {
+        // Encrypt with public key
+        let rsa = Rsa::public_key_from_pem(read_file_content_from_dir(&public_key_pem).as_bytes()).unwrap();
+        let mut buf: Vec<u8> = vec![0; rsa.size() as usize];
+        let _ = rsa.public_encrypt(&data, &mut buf, Padding::PKCS1).unwrap();
+        println!("Encrypted: {:?}", &buf);
+        return buf
+    }
 }

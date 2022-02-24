@@ -1,4 +1,4 @@
 katniane_chain_address = '127.0.0.1'
 katniane_chain_port = '9955'
-public_key_location = '/home/elly/Projects/software/katniane-lms/testing-items/rsa-keys/public-key.pem'
+public_key_location = ''
 private_key_location = ''

@@ -108,8 +108,8 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
     "save_audit_log",
     incoming_audit_log.filename.to_string().into_bytes(),
     datetime.to_string().into_bytes(),
-    utilities::should_rsa_encrypt_data(incoming_audit_log.title.to_string().into_bytes()),
-    utilities::should_rsa_encrypt_data(incoming_audit_log.content.to_string().into_bytes()),
+    incoming_audit_log.title.to_string().into_bytes(),
+    incoming_audit_log.content.to_string().into_bytes(),
     now.to_rfc3339().to_string().into_bytes()
   );
 

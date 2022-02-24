@@ -12,8 +12,6 @@ use openssl::symm::Cipher;
 pub struct Config {
     pub katniane_chain_address: String,
     pub katniane_chain_port: String,
-    pub public_key_location: String,
-    pub private_key_location: String,
 }
 
 pub fn load_service_config() -> Config {

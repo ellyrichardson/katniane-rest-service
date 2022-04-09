@@ -88,7 +88,7 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
 
   let client = WsRpcClient::new(&chain_ws_url);
 
-  let from = AccountKeyring::Alice.pair();
+  let from = AccountKeyring::Bob.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   let now: DateTime<Local> = Local::now();

@@ -15,33 +15,8 @@ use toml::Value;
 
 use std::env;
 
+mod utilities;
 mod models;
-
-// TODO: Move this in it's own file
-fn load_service_config() -> models::Config {
-  // Working directory of the application
-  let mut env_dir: String = env::current_dir().unwrap().into_os_string().into_string().unwrap();
-
-  let config_file: &str = "/Config.toml";
-  println!("Working directory is {:?}", &env_dir);
-  env_dir.push_str(config_file);
-
-  let mut cfl = match File::open(&env_dir) {
-    Ok(f) => f,
-    Err(e) => panic!("Error occurred opening config file: {} - Err: {}", &env_dir, e)
-  };
-
-  let mut cfstr = String::new();
-  match cfl.read_to_string(&mut cfstr) {
-    Ok(s) => s,
-    Err(e) => panic!("Error Reading file: {}", e)
-  };
-
-  println!("Config File: {}", &env_dir);
-  println!("Config contents: {}", &cfstr);
-
-  toml::from_str(&cfstr).unwrap()
-}
 
 // TODO: Move JSON bodies in it's own file
 pub fn log_body() -> impl Filter<Extract = (models::IncomingAuditLog,), Error = warp::Rejection> + Clone {
@@ -61,7 +36,8 @@ pub fn validator_body() -> impl Filter<Extract = (models::ValidatorAccount,), Er
   
 pub fn ping_chain() -> std::string::String {
 
-  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+  let config = utilities::load_service_config();
+  let chain_ws_url = format!("ws://{}:{}", &config.katniane_chain_address, &config.katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
   let api = Api::<sr25519::Pair, _>::new(client).unwrap();
@@ -81,7 +57,8 @@ pub fn ping_chain() -> std::string::String {
 
 pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> Result<impl warp::Reply, warp::Rejection> {
 
-  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+  let config = utilities::load_service_config();
+  let chain_ws_url = format!("ws://{}:{}", &config.katniane_chain_address, &config.katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
 
@@ -106,11 +83,12 @@ pub async fn get_file_logs_from_date(log_filename: String, log_date: String) -> 
 
 pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<impl warp::Reply, warp::Rejection> {
 
-  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+  let config = utilities::load_service_config();
+  let chain_ws_url = format!("ws://{}:{}", &config.katniane_chain_address, &config.katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
 
-  let from = AccountKeyring::Alice.pair();
+  let from = AccountKeyring::Bob.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   let now: DateTime<Local> = Local::now();
@@ -151,7 +129,7 @@ pub async fn save_log(incoming_audit_log: models::IncomingAuditLog) -> Result<im
 
 // NOTE: This add_validator() is still not used anywhere
 pub async fn add_validator(validator_account: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
-  let chain_ws_url = format!("ws://{}:{}", load_service_config().katniane_chain_address, load_service_config().katniane_chain_port);
+  let chain_ws_url = format!("ws://{}:{}", utilities::load_service_config().katniane_chain_address, utilities::load_service_config().katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
   let from = AccountKeyring::Alice.pair();

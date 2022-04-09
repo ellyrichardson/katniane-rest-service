@@ -37,10 +37,3 @@ pub struct ValidatorAccount {
     pub validator_id: String,
 }
 
-// REST Service Config
-#[derive(Deserialize)]
-pub struct Config {
-    pub katniane_chain_address: String,
-    pub katniane_chain_port: String,
-}
-

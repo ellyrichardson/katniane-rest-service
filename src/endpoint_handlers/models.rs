@@ -33,6 +33,17 @@ pub struct IncomingAuditLog {
 }
 
 #[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
+pub struct AuditLogToBeOpenedForClaiming {
+    pub filename: String,
+    pub claimer_pubkey: String,
+}
+
+#[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
+pub struct AuditLogToBeClaimed {
+    pub filename: String,
+}
+
+#[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
 pub struct ValidatorAccount {
     pub validator_id: String,
 }

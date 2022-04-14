@@ -1,10 +1,12 @@
 extern crate toml;
 
 use sp_core::sr25519;
+use sp_core::ed25519::{self, Public};
+// use sp_core::ed25519::Public::FromStr;
 use std::convert::{TryFrom, TryInto};
 use substrate_api_client::rpc::WsRpcClient;
 use substrate_api_client::{Api, Metadata, compose_extrinsic, UncheckedExtrinsicV4, XtStatus};
-use sp_core::crypto::Pair;
+use sp_core::crypto::{Pair, Ss58Codec};
 use sp_keyring::AccountKeyring;
 use warp::{http, Filter};
 use chrono::{DateTime, Local};
@@ -151,7 +153,7 @@ fn vec_to_fixed_size<T>(v: Vec<T>) -> [T; 32] {
   let boxed_slice = v.into_boxed_slice();
   let boxed_array: Box<[T; 32]> = match boxed_slice.try_into() {
       Ok(ba) => ba,
-      Err(o) => panic!("Expected a Vec of length {} but it was {}", 32, o.len()),
+      Err(o) => panic!("Account Public Key is not of length {} but it was {}", 32, o.len()),
   };
   *boxed_array
 }
@@ -168,7 +170,7 @@ pub async fn open_log_for_ownership_claim(log_to_be_opened: models::AuditLogToBe
   let from = AccountKeyring::Bob.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
-  println!("[+] Test of outputting Alice key:\n {:?}\n", AccountKeyring::Alice.to_raw_public_vec());
+  println!("[+] Test of outputting Charlie key:\n {:?}\n", AccountKeyring::Charlie.to_raw_public_vec());
 
   let now: DateTime<Local> = Local::now();
 
@@ -181,26 +183,38 @@ pub async fn open_log_for_ownership_claim(log_to_be_opened: models::AuditLogToBe
   println!("date_time of added_log {}", &datetime);
 
   // Convert claimer from String to Vec<u8>
-  let open_log_claimer = log_to_be_opened.claimer_pubkey.into_bytes();
+  //let open_log_claimer = log_to_be_opened.claimer_pubkey.as_bytes().to_vec();
 
-  // Compose the extrinsic
-  #[allow(clippy::redundant_clone)]
-  let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-    api.clone(),
-    "Auditor",
-    "open_log_for_ownership_claim",
-    log_to_be_opened.filename.to_string().into_bytes(),
-    vec_to_fixed_size(open_log_claimer)
-    // TODO: maybe get the date here
-  );
+  // TODO: Fix this
+  // let open_log_claimer = ed25519::Public::from_ss58check(&log_to_be_opened.claimer_pubkey);
+  match ed25519::Public::from_ss58check(&log_to_be_opened.claimer_pubkey) {
+    Ok(olc_res) => {
 
-  
-  println!("[+] Composed Extrinsic:\n {:?}\n", xt);
-  
-  // send and watch extrinsic until finalized
-  let blockh = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+        println!("[+] Test of outputting Charlie key2 :\n {:?}\n", &olc_res.as_array_ref());
 
-  println!("[+] Transaction got included in block {:?}", blockh);
+      // Compose the extrinsic
+      #[allow(clippy::redundant_clone)]
+      let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
+        api.clone(),
+        "Auditor",
+        "open_log_for_ownership_claim",
+        log_to_be_opened.filename.to_string().into_bytes(),
+        olc_res.as_array_ref()
+        // TODO: maybe get the date here
+      );
+
+      
+      println!("[+] Composed Extrinsic:\n {:?}\n", xt);
+      
+      // send and watch extrinsic until finalized
+      let blockh = api.send_extrinsic(xt.hex_encode(), XtStatus::InBlock).unwrap();
+
+      println!("[+] Transaction got included in block {:?}", blockh);
+    },
+    Err(error) => {
+        println!("[-] Error encountered while processing claimer pubkey {:?}", error);
+    }
+  }
 
   Ok(warp::reply::with_status(
     "Added logs to blockchain",
@@ -216,7 +230,7 @@ pub async fn claim_log_for_ownership(log_to_be_claimed: models::AuditLogToBeClai
   let client = WsRpcClient::new(&chain_ws_url);
 
   // Get the private key of the sender here
-  let from = AccountKeyring::Bob.pair();
+  let from = AccountKeyring::Charlie.pair();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   let now: DateTime<Local> = Local::now();
@@ -234,7 +248,7 @@ pub async fn claim_log_for_ownership(log_to_be_claimed: models::AuditLogToBeClai
     api.clone(),
     "Auditor",
     "claim_log",
-    log_to_be_opened.filename.to_string().into_bytes()
+    log_to_be_claimed.filename.to_string().into_bytes()
     // TODO: maybe get the date here
   );
 
@@ -253,7 +267,7 @@ pub async fn claim_log_for_ownership(log_to_be_claimed: models::AuditLogToBeClai
 }
 
 // NOTE: This add_validator() is still not used anywhere
-pub async fn add_validator(validator_account: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
+/*pub async fn add_validator(validator_account: models::ValidatorAccount) -> Result<impl warp::Reply, warp::Rejection> {
   let chain_ws_url = format!("ws://{}:{}", utilities::load_service_config().katniane_chain_address, utilities::load_service_config().katniane_chain_port);
 
   let client = WsRpcClient::new(&chain_ws_url);
@@ -298,4 +312,4 @@ pub async fn add_validator(validator_account: models::ValidatorAccount) -> Resul
     "Added logs to blockchain",
     http::StatusCode::CREATED,
   ))
-}
+}*/

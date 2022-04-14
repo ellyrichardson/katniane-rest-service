@@ -48,19 +48,20 @@ async fn main() {
       .and(warp::path("log_ownership"))
       .and(warp::path("claim"))
       .and(warp::path::end())
-      .and(endpoint_handlers::claim_log_for_ownership())
+      .and(endpoint_handlers::claim_log_body())
       .and_then(endpoint_handlers::claim_log_for_ownership);
 
     /*
       CURL SAMPLE USAGE: curl -X POST 127.0.0.1:3030/v1/participants -H 'Content-Type: application/json' -d '{"validator_id":"0x16b215a5fd8b8caa03e75313e78c8ee344ba6ee7c6c2d6ce0a0a2e4e3a0d2377f775fc2682db3bb79376a61e773a87cddd1e5e5935cdea8a9ab3a54be011a62b"}'
      */
     // NOTE: THIS add_validator function is not yet functional
+    /*
     let add_validator = warp::post()
       .and(warp::path("v1"))
       .and(warp::path("participants"))
       .and(warp::path::end())
       .and(endpoint_handlers::validator_body())
-      .and_then(endpoint_handlers::add_validator);
+      .and_then(endpoint_handlers::add_validator);*/
 
     let cors = warp::cors()
       .allow_any_origin()
@@ -72,7 +73,7 @@ async fn main() {
       .or(save_log)
       .or(open_log_for_ownership_claim)
       .or(claim_log_for_ownership)
-      .or(add_validator)
+      //.or(add_validator)
       .with(cors);
 
     warp::serve(routes)

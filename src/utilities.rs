@@ -1,11 +1,8 @@
 use std::{env, str};
 use std::fs::File;
 use std::io::Read;
-use toml::Value;
 use serde::Deserialize;
 use std::string::String;
-use openssl::rsa::{Rsa, Padding};
-use openssl::symm::Cipher;
 
 // REST Service Config
 #[derive(Deserialize)]

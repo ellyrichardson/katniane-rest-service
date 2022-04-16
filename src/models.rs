@@ -2,8 +2,6 @@ extern crate rustc_serialize;
 
 use serde::{Serialize, Deserialize};
 use codec::{Decode, Encode};
-use rustc_serialize::Decodable;
-use rustc_serialize::Decoder;
 
 // Dependencies for hash string converter
 use sp_core::sr25519::Public;
@@ -30,6 +28,17 @@ pub struct IncomingAuditLog {
     pub filename: String,
     pub title: String,
     pub content: String,
+}
+
+#[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
+pub struct AuditLogToBeOpenedForClaiming {
+    pub filename: String,
+    pub claimer_pubkey: String,
+}
+
+#[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]
+pub struct AuditLogToBeClaimed {
+    pub filename: String,
 }
 
 #[derive(Encode, Decode, Clone, Default, Eq, PartialEq, Debug, Deserialize, Serialize)]

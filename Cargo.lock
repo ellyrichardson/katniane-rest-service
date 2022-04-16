@@ -1264,6 +1264,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "katniane-rest"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "futures 0.3.18",
+ "hex",
+ "hyper 0.11.27",
+ "openssl",
+ "parity-scale-codec",
+ "reqwest",
+ "rustc-serialize",
+ "serde",
+ "serde_json",
+ "sp-core",
+ "sp-keyring",
+ "substrate-api-client",
+ "tokio 1.14.0",
+ "toml",
+ "warp",
+]
+
+[[package]]
 name = "keccak"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3750,28 +3772,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "652931506d2c1244d7217a70b99f56718a7b4161b37f04e7cd868072a99f68cd"
 dependencies = [
  "hash-db",
-]
-
-[[package]]
-name = "trutheye-client"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "futures 0.3.18",
- "hex",
- "hyper 0.11.27",
- "openssl",
- "parity-scale-codec",
- "reqwest",
- "rustc-serialize",
- "serde",
- "serde_json",
- "sp-core",
- "sp-keyring",
- "substrate-api-client",
- "tokio 1.14.0",
- "toml",
- "warp",
 ]
 
 [[package]]

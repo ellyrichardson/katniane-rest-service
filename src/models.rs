@@ -2,8 +2,6 @@ extern crate rustc_serialize;
 
 use serde::{Serialize, Deserialize};
 use codec::{Decode, Encode};
-use rustc_serialize::Decodable;
-use rustc_serialize::Decoder;
 
 // Dependencies for hash string converter
 use sp_core::sr25519::Public;

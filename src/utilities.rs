@@ -9,6 +9,8 @@ use std::string::String;
 pub struct Config {
     pub katniane_chain_address: String,
     pub katniane_chain_port: String,
+    pub private_key: String,
+    pub private_key_password: String,
 }
 
 pub fn load_service_config() -> Config {

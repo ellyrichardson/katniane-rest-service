@@ -1,7 +1,7 @@
 extern crate toml;
 
-use sp_core::sr25519;
-// use sp_core::ed25519::Public::FromStr;
+//use sp_core::{sr25519::Pair, Pair as TraitPair};
+use sp_core::{sr25519, Pair};
 use std::convert::TryFrom;
 use substrate_api_client::rpc::WsRpcClient;
 use substrate_api_client::{Api, Metadata};
@@ -67,7 +67,10 @@ pub async fn save_log(incoming_audit_log: IncomingAuditLog) -> Result<impl warp:
 
   let client = WsRpcClient::new(&chain_ws_url);
 
-  let from = AccountKeyring::Bob.pair();
+  // Get the private key of the sender here
+  let priv_key = &config.private_key;
+  let piv_key_pass: Option<&str> = Some(&config.private_key_password);
+  let from = Pair::from_string(&priv_key[..], piv_key_pass).unwrap();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   let now: DateTime<Local> = Local::now();
@@ -96,7 +99,9 @@ pub async fn open_log_for_ownership_claim(log_to_be_opened: AuditLogToBeOpenedFo
   let client = WsRpcClient::new(&chain_ws_url);
 
   // Get the private key of the sender here
-  let from = AccountKeyring::Bob.pair();
+  let priv_key = &config.private_key;
+  let piv_key_pass: Option<&str> = Some(&config.private_key_password);
+  let from = Pair::from_string(&priv_key[..], piv_key_pass).unwrap();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   // TODO: Put this whole match statement in its own function
@@ -116,7 +121,9 @@ pub async fn claim_log_for_ownership(log_to_be_claimed: AuditLogToBeClaimed) -> 
   let client = WsRpcClient::new(&chain_ws_url);
 
   // Get the private key of the sender here
-  let from = AccountKeyring::Charlie.pair();
+  let priv_key = &config.private_key;
+  let piv_key_pass: Option<&str> = Some(&config.private_key_password);
+  let from = Pair::from_string(&priv_key[..], piv_key_pass).unwrap();
   let api = Api::new(client).map(|api| api.set_signer(from)).unwrap();
 
   extrinsic_submitters::submit_to_claim_log(api, log_to_be_claimed);

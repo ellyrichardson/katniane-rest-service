@@ -1,2 +1,4 @@
 katniane_chain_address = '127.0.0.1'
 katniane_chain_port = '9953'
+private_key = '0x2fec45413b1452d8d859e5980786ddc147628e6bc67bd1b84ffe20c219c96655'
+private_key_password = 'pencil laptop kitchen cutter'
